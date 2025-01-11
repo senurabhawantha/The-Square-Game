@@ -113,7 +113,7 @@ struct ContentView: View {
     }
 
     private func generateGrid() -> [[Color]] {
-        let allColors: [Color] = [.teal, .orange, .purple, .pink]
+        let allColors: [Color] = [.red, .blue, .green, .yellow] // Updated colors
         var colorPool = allColors.flatMap { [$0, $0] }
         colorPool.append(.black)
         colorPool.shuffle()
