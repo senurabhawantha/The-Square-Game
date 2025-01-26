@@ -8,8 +8,13 @@ struct ContentView: View {
     @State private var score: Int = 0
     @State private var isGameWon: Bool = false
 
+    // Timer-related states
+    @State private var remainingTime: Int = 30
+    @State private var timer: Timer? = nil
+    @State private var isTimerRunning: Bool = false
+
     init() {
-        _colors = State(initialValue: generateGrid())
+        _colors = State(initialValue: ContentView.generateGrid()) // Use static call here
     }
 
     var body: some View {
@@ -34,6 +39,13 @@ struct ContentView: View {
                         .shadow(radius: 3)
                 }
             } else {
+                if isTimerRunning {
+                    Text("Time Remaining: \(remainingTime)s")
+                        .font(.headline)
+                        .foregroundColor(remainingTime > 10 ? .green : .red)
+                        .padding()
+                }
+
                 ForEach(0..<3, id: \.self) { row in
                     HStack {
                         ForEach(0..<3, id: \.self) { column in
@@ -73,6 +85,10 @@ struct ContentView: View {
     }
 
     private func handleTap(row: Int, column: Int) {
+        if !isTimerRunning {
+            startTimer()
+        }
+
         if selectedIndices.contains(where: { $0 == (row, column) }) {
             return
         }
@@ -89,6 +105,7 @@ struct ContentView: View {
 
                 if matchedIndices.count == 8 {
                     isGameWon = true
+                    stopTimer()
                 }
             } else {
                 feedback = "Try Again!"
@@ -103,17 +120,37 @@ struct ContentView: View {
         }
     }
 
+    private func startTimer() {
+        isTimerRunning = true
+        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
+            if remainingTime > 0 {
+                remainingTime -= 1
+            } else {
+                stopTimer()
+                isGameWon = false // Game ends if time runs out
+            }
+        }
+    }
+
+    private func stopTimer() {
+        isTimerRunning = false
+        timer?.invalidate()
+        timer = nil
+    }
+
     private func restartGame() {
-        colors = generateGrid()
+        colors = ContentView.generateGrid() // Use static call here
         matchedIndices.removeAll()
         selectedIndices.removeAll()
         feedback = ""
         score = 0
         isGameWon = false
+        remainingTime = 30
+        stopTimer()
     }
 
-    private func generateGrid() -> [[Color]] {
-        let allColors: [Color] = [.red, .blue, .green, .yellow] // Updated colors
+    private static func generateGrid() -> [[Color]] { // Kept as static
+        let allColors: [Color] = [.red, .blue, .green, .yellow]
         var colorPool = allColors.flatMap { [$0, $0] }
         colorPool.append(.black)
         colorPool.shuffle()
